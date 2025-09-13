@@ -5,11 +5,15 @@ const app = express();
 const session = require('express-session');
 
 const mongoose = require("mongoose");
+const isSignedIn = require('./middleware/is-signed-in.js');
+const passUserToView = require('./middleware/pass-user-to-view.js');
 const methodOverride = require("method-override");
 const morgan = require("morgan");
 
+
 // Controllers
 const authController = require("./controllers/auth.js");
+const applicationsController = require('./controllers/applications.js');
 
 // Set the port from environment variable or default to 3000
 const port = process.env.PORT ? process.env.PORT : "3000";
@@ -25,7 +29,7 @@ app.use(express.urlencoded({ extended: false }));
 // Middleware for using HTTP verbs such as PUT or DELETE
 app.use(methodOverride("_method"));
 // Morgan for logging HTTP requests
-app.use(morgan('dev'));
+// app.use(morgan('dev'));
 
 
 app.use(
@@ -35,33 +39,24 @@ app.use(
     saveUninitialized: true,
   })
 );
-app.use("/auth", authController);
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+app.use(passUserToView); 
 
 
 // Routes
-
-// Public Routes
-// log-in and regesteration route
-// GET /
-app.get("/", (req, res) => {
-  res.render("index.ejs", {
+app.get('/', (req, res) => {
+  res.render('index.ejs', {
     user: req.session.user,
   });
 });
 
+app.use("/auth", authController);
 
+app.use(isSignedIn); // any route afer this is protected
 
-// Protected Routes
+// protected Routes
 
-
+app.use('/users/:userId/applications', applicationsController); 
 
 
 
